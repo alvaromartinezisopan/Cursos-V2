@@ -1,0 +1,15 @@
+export const TIME_ZONE='Europe/Madrid';
+export const COLUMNS=['ID_CURSO','ID_SESION','CATEGORIA','CURSO','FECHA','HORA_INICIO','HORA_FIN','LUGAR','CONVOCADOS','ACTIVO','CREADO_EN','ACTUALIZADO_EN','VERSION'];
+export function today(now=new Date()){return new Intl.DateTimeFormat('sv-SE',{timeZone:TIME_ZONE,year:'numeric',month:'2-digit',day:'2-digit'}).format(now);}
+export function validDate(value){if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return false;const d=new Date(value+'T12:00:00Z');return !isNaN(d)&&d.toISOString().slice(0,10)===value;}
+export function addDays(day,n){const d=new Date(day+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);}
+export function displayDate(day){return day.split('-').reverse().join('/');}
+export function uniquePeople(text){const seen=new Set();return String(text||'').split(/\r?\n/).map(v=>v.trim()).filter(v=>{const k=v.toLocaleLowerCase('es');if(!v||seen.has(k))return false;seen.add(k);return true;});}
+export function validateSession(s){const errors=[];for(const k of ['ID_CURSO','ID_SESION','CATEGORIA','CURSO','LUGAR'])if(!String(s[k]||'').trim())errors.push(k+': obligatorio');if(!validDate(s.FECHA))errors.push('FECHA: fecha no válida');for(const k of ['HORA_INICIO','HORA_FIN'])if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(s[k]||''))errors.push(k+': hora no válida');if(s.HORA_FIN<=s.HORA_INICIO)errors.push('La hora de fin debe ser posterior a la de inicio');if(!uniquePeople(s.CONVOCADOS).length)errors.push('CONVOCADOS: añade al menos una persona');return errors;}
+export function normalizeSession(s){return {...s,CATEGORIA:s.CATEGORIA.trim(),CURSO:s.CURSO.trim(),LUGAR:s.LUGAR.trim(),CONVOCADOS:uniquePeople(s.CONVOCADOS).join('\n'),ACTIVO:s.ACTIVO===true||s.ACTIVO==='TRUE'};}
+export function tvSessions(rows,day=today()){const last=addDays(day,14);return rows.filter(r=>(r.ACTIVO===true||r.ACTIVO==='TRUE')&&validDate(r.FECHA)&&r.FECHA>=day&&r.FECHA<=last).sort((a,b)=>a.FECHA.localeCompare(b.FECHA)||a.HORA_INICIO.localeCompare(b.HORA_INICIO)||a.ID_SESION.localeCompare(b.ID_SESION));}
+export function badgeFor(session,firstShown,now=new Date()){const day=today(now);if(session.FECHA===day)return 'HOY';if(session.FECHA===addDays(day,1))return 'MAÑANA';const elapsed=now.getTime()-Number(firstShown);return Number.isFinite(elapsed)&&elapsed>=0&&elapsed<86400000?'NUEVO':'';}
+export function firstAppearance(storage,id,now=Date.now()){const key='cursos-v2:first:'+id;try{const stored=storage.getItem(key);if(stored!==null&&Number.isFinite(Number(stored)))return Number(stored);storage.setItem(key,String(now));}catch{}return now;}
+export function suggestions(rows,field){return [...new Set(rows.flatMap(r=>field==='CONVOCADOS'?uniquePeople(r[field]):[String(r[field]||'').trim()]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));}
+export function monthItems(rows,year,month){const prefix=year+'-'+String(month).padStart(2,'0')+'-';return rows.filter(r=>r.ACTIVO===true&&r.FECHA.startsWith(prefix));}
+export function newId(){return crypto.randomUUID();}
