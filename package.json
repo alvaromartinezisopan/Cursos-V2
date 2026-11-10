@@ -1,0 +1,14 @@
+{
+  "name": "cursos-v2-pruebas",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "test": "node --test *.test.js",
+    "build": "node build.mjs",
+    "check": "npm test && npm run build"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12"
+  }
+}
