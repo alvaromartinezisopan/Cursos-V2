@@ -4,7 +4,7 @@ Dos páginas independientes: `Admin.html` y `Tv.html`. Preparadas para GitHub Pa
 
 ## Acceso
 
-Cada enlace lleva una llave larga en el fragmento, no en la petición GET. El servidor verifica su huella en cada operación. La llave de tele solo permite leer sesiones activas de hoy a +14 días; no puede escribir ni borrar. La llave de administración permite editar la hoja de pruebas. Quien tenga esa llave puede administrar: no hay verificación de identidad personal. No publicar ni reenviar el enlace de administración.
+Cada enlace lleva una llave larga en el fragmento, no en la petición GET. El servidor verifica su huella en cada operación. La llave de tele solo permite leer las próximas sesiones activas de los cursos cuya primera sesión activa esté a 14 días o menos (o ya haya pasado); no puede escribir ni borrar. La llave de administración permite editar la hoja de pruebas. Quien tenga esa llave puede administrar: no hay verificación de identidad personal. No publicar ni reenviar el enlace de administración.
 
 Las llaves NO están en el código ni en el repositorio. Se conservan en la sesión de la pestaña y el fragmento se limpia de la barra. Para abrir otra pestaña o navegador, usar el favorito original. Revocar y crear nuevos enlaces invalida los anteriores.
 
@@ -27,7 +27,7 @@ No activar GitHub Pages ni pasar a producción hasta la decisión del propietari
 
 ## Datos y comportamiento
 
-Una fila por sesión. Columnas: ID_CURSO, ID_SESION, CATEGORIA, CURSO, FECHA, HORA_INICIO, HORA_FIN, LUGAR, CONVOCADOS, ACTIVO, CREADO_EN, ACTUALIZADO_EN, VERSION. Fechas ISO y zona Europe/Madrid. Convocados por sesión, sin fusionar cursos por título. Bloqueo y VERSION impiden pisar cambios concurrentes. Campos escapados al escribir en la hoja.
+Una fila por sesión. Columnas: ID_CURSO, ID_SESION, CATEGORIA, CURSO, FECHA, HORA_INICIO, HORA_FIN, LUGAR, CONVOCADOS, ACTIVO, CREADO_EN, ACTUALIZADO_EN, VERSION, TIPO_CONVOCATORIA. Fechas ISO y zona Europe/Madrid. El tipo SESIONES mantiene convocados por sesión; ALTERNATIVAS usa un grupo común y varios horarios a elegir. No se fusionan cursos por título. Bloqueo y VERSION impiden pisar cambios concurrentes. Campos escapados al escribir en la hoja.
 
 Tele: una tarjeta por página, rotación 15 s, actualización 45 s, prioridad HOY > MAÑANA > NUEVO. NUEVO dura 24 horas desde la primera aparición en esa tele; la previsualización no consume ese contador. Error de red: estado de desconexión, no agenda antigua presentada como actual.
 
@@ -35,6 +35,18 @@ Admin C: calendario por colores y agenda, previsualización del mismo documento 
 
 ## Verificación y límites
 
-16 tests automáticos de fechas, sellos, persistencia, llaves, revocación, permisos de tele, concurrencia y lectura ACTIVO en minúsculas. Pruebas de UI: sin llave muestra error y retira splash; llave viaja en POST y se limpia del fragmento; recarga conserva sesión de pestaña. Puente real entre dominios comprobado con rechazo de petición sin llave.
+29 tests automáticos de fechas, sellos, persistencia, llaves, revocación, permisos de tele, concurrencia y lectura ACTIVO en minúsculas. Pruebas de UI: sin llave muestra error y retira splash; llave viaja en POST y se limpia del fragmento; recarga conserva sesión de pestaña. Puente real entre dominios comprobado con rechazo de petición sin llave.
 
-Pendiente: ciclo integrado real guardar/leer/editar/borrar con llave válida contra la hoja nueva, verificación de tele con llave, revisión en dispositivo y aprobación para activar Pages. No se ha activado producción. No hay promesa de disponibilidad ni protección contra abuso a escala; se usan cuotas gratuitas de Google y un límite básico de peticiones.
+Pendiente: ciclo integrado real guardar/leer/editar/borrar con llave válida contra la hoja nueva, verificación de tele con llave, revisión en dispositivo y verificación de la actualización en Pages. Estos cambios siguen preparados localmente; aún no se han publicado. No hay promesa de disponibilidad ni protección contra abuso a escala; se usan cuotas gratuitas de Google y un límite básico de peticiones.
+
+## Agrupación y visibilidad
+
+La tele presenta una tarjeta por ID_CURSO. Agrupa por fecha y conserva cada horario y su grupo. Los cursos largos continúan en varias páginas seguidas, cada 15 segundos, sin reducir la letra. La vista previa utiliza el mismo visualizador.
+
+El curso empieza a ser visible 14 días antes de su primera sesión activa. Desde entonces se muestran todas sus sesiones activas futuras, también las que estén a más de 14 días. Cada horario se oculta a su hora de fin, en Europe/Madrid. Cuando no quedan horarios, el curso desaparece de la tele, pero sus registros siguen en la hoja y el admin.
+
+### Actualizar una instalación de 13 columnas
+
+Haz copia de seguridad de la hoja NUEVA antes del primer guardado. Actualiza Code.gs en la implementación existente, manteniendo su URL y propiedades, antes de usar el frontend nuevo. No es necesario regenerar llaves por este cambio de código.
+
+La API nueva lee las 13 columnas antiguas sin modificarlas y considera esos registros SESIONES. El primer guardado añade TIPO_CONVOCATORIA como columna N, sin mover ni borrar columnas anteriores. La API conserva el tipo si un cliente antiguo lo omite, pero hay que actualizar también Admin.html y Tv.html antes de editar alternativas para usar su interfaz correcta. No vuelvas al backend antiguo después de añadir la columna N sin un plan de reversión.
