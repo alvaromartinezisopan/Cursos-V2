@@ -18,3 +18,6 @@ export function newId(){return crypto.randomUUID();}
 
 export function courseGroups(sessions){const groups=new Map();for(const session of sessions){const key=session.ID_CURSO||session.ID_SESION;if(!groups.has(key))groups.set(key,{...session,sessions:[]});groups.get(key).sessions.push(session);}return [...groups.values()].map(group=>({...group,sessions:group.sessions.sort((a,b)=>a.FECHA.localeCompare(b.FECHA)||a.HORA_INICIO.localeCompare(b.HORA_INICIO))}));}
 export function courseBadge(sessions,firstShown,now=new Date()){const badges=sessions.map(s=>badgeFor(s,firstShown[s.ID_SESION],now));return ['HOY','MAÑANA','NUEVO'].find(b=>badges.includes(b))||'';}
+
+export const ROTATION_MIN=3,ROTATION_MAX=60,ROTATION_DEFAULT=15;
+export function normalizeRotation(v){const n=Math.round(Number(v));if(!Number.isFinite(n)||n<ROTATION_MIN||n>ROTATION_MAX)throw new Error('Los segundos entre páginas deben estar entre '+ROTATION_MIN+' y '+ROTATION_MAX+'.');return n;}
